@@ -1,4 +1,4 @@
-﻿#Программа конвертации подготовки файлов для OpenWay
+﻿#Программа конвертации файлов для OpenWay
 #(c) Гребенёв О.Е. 04.06.2020
 
 [string]$curDir = Split-Path -Path $myInvocation.MyCommand.Path -Parent
