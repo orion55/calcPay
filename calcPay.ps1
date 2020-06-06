@@ -63,16 +63,28 @@ function convertTmpFiles {
     param (
         $tmpPath
     )
+
+    function renameFile {
+        param (
+            $file
+        )
+        Get-Content $file.FullName | Out-File $file001 -Encoding UTF8
+        Remove-Item $file.FullName -force
+        Get-ChildItem $file001 | Rename-Item -NewName { $_.name -replace '\.001', '' }        
+    }
+
     $txtTmpFiles = Get-ChildItem "$tmpPath\*.txt"
 
     ForEach ($file in $txtTmpFiles) {
-        if ($encoding -eq 866) {
-            Write-Log -EntryType Information -Message "Конвертируем dos -> win $($file.Name)" 
+        Write-Log -EntryType Information -Message "Конвертируем файл $($file.Name)" 
+        
+        $file001 = "$($file.FullName).001"
+        if ($encoding -eq 866) {            
             ./lib/dostowin.exe $file
-            $file001 = "$($file.FullName).001"         
-            Get-Content $file.FullName | Out-File $file001 -Encoding UTF8
-            Remove-Item $file.FullName -force
-            Get-ChildItem $file001 | Rename-Item -NewName { $_.name -replace '\.001', '' }
+            renameFile -file $file
+        }
+        elseif (($encoding -eq 1251) -or ($encoding -eq 1200)) {
+            renameFile -file $file
         }
     }
 }
@@ -100,6 +112,7 @@ Copy-Item $txtFiles $tmpPath
 
 convertTmpFiles -tmpPath $tmpPath
 
+$txtTmpFiles = Get-ChildItem "$tmpPath\*.txt"
 $i = 1
 ForEach ($file in $txtTmpFiles) {
     $result = calculation -fileName $file
