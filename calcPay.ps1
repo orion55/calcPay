@@ -59,6 +59,24 @@ function saveData {
     $data.content | Out-File $fileName -Encoding OEM -Append    
 }
 
+function convertTmpFiles {
+    param (
+        $tmpPath
+    )
+    $txtTmpFiles = Get-ChildItem "$tmpPath\*.txt"
+
+    ForEach ($file in $txtTmpFiles) {
+        if ($encoding -eq 866) {
+            Write-Log -EntryType Information -Message "Конвертируем dos -> win $($file.Name)" 
+            ./lib/dostowin.exe $file
+            $file001 = "$($file.FullName).001"         
+            Get-Content $file.FullName | Out-File $file001 -Encoding UTF8
+            Remove-Item $file.FullName -force
+            Get-ChildItem $file001 | Rename-Item -NewName { $_.name -replace '\.001', '' }
+        }
+    }
+}
+
 Clear-Host
 
 Start-HostLog -LogLevel Information
@@ -80,14 +98,7 @@ if (($txtFiles | Measure-Object).count -eq 0) {
 
 Copy-Item $txtFiles $tmpPath
 
-$txtTmpFiles = Get-ChildItem "$tmpPath\*.txt"
-
-if ($encoding -eq 866) {
-    ForEach ($file in $txtTmpFiles) {
-        Write-Log -EntryType Information -Message "Конвертируем dos -> win $($file.Name)" 
-        ./lib/dostowin.exe $file     
-    }
-}
+convertTmpFiles -tmpPath $tmpPath
 
 $i = 1
 ForEach ($file in $txtTmpFiles) {
